@@ -23,7 +23,7 @@ public class ConnectionRequestManager extends Thread{
     final static int TIME_OUT    = 30000; // 30 sec;
 
     private ArrayList<Room> rooms;
-    
+
     private Selector selector;
     private boolean finish;
 
@@ -37,46 +37,45 @@ public class ConnectionRequestManager extends Thread{
 
         while(!finish) {
             try{
+
                 int readyChannels = selector.select();
                 if(readyChannels == 0){ Thread.sleep(1); continue;}
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
                 Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
+
                 while(keyIterator.hasNext()) {
                     SelectionKey key = keyIterator.next();
                     keyIterator.remove();
-                    if(key.isValid()){
-                        if (key.isReadable()) {
-                            String msg = recive(key);
-                            int requestType = -1;
-                            try{
-                                JSONParser parser = new JSONParser();
-                                System.out.println(parser.parse(msg));
-                                JSONObject obj = (JSONObject) parser.parse(msg);
-                                System.out.println((String)obj.get("request"));
-                                requestType = Integer.valueOf((String)obj.get("request"));
-                            }catch(Exception e){
-
-                            }
-                            String resp = "";
-                            switch (requestType){
-                                case LIST_ROOM:
-                                    resp = "You have request the list of room.";
-                                    break;
-                                case JOIN_ROOM:
-                                    resp = "You want join in a room but it's not yet implements.";
-                                    break;
-                                case CREATE_ROOM:
-                                    resp = "You want join in a room but it's not yet implements.";
-                                    break;
-                                case EXIT:
-                                    resp = "The connection will be closed.";
-                                default:
-                                    resp ="Your request is invalide.";
-                            }
-                            send(key, resp);
+                    if (key.isReadable()) {
+                        String msg = recive(key);
+                        int requestType = -1;
+                        try{
+                            JSONParser parser = new JSONParser();
+                            System.out.println(parser.parse(msg));
+                            JSONObject obj = (JSONObject) parser.parse(msg);
+                            System.out.println((String)obj.get("request"));
+                            requestType = Integer.valueOf((String)obj.get("request"));
+                        }catch(Exception e){}
+                        String resp = "";
+                        switch (requestType){
+                            case LIST_ROOM:
+                                resp = "You have request the list of room.";
+                                break;
+                            case JOIN_ROOM:
+                                resp = "You want join in a room but it's not yet implements.";
+                                break;
+                            case CREATE_ROOM:
+                                resp = "You want join in a room but it's not yet implements.";
+                                break;
+                            case EXIT:
+                                resp = "The connection will be closed.";
+                            default:
+                                resp ="Your request is invalide.";
                         }
+                        send(key, resp);
                     }
                 }
+
             }catch (Exception e){
                 Log.log(e.getMessage());
             }
