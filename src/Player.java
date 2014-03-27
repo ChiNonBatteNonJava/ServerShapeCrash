@@ -16,8 +16,8 @@ public class Player
     private int id;
 
 
-    public Player(){
-        /* TODO */
+    public Player(SocketChannel sc){
+        socket = sc;
     }
 
 }

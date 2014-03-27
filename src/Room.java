@@ -33,16 +33,19 @@ public class Room extends Thread {
     private String name;
     private String password;
     private boolean finish;
+    private static int static_id = 0;
 
-    public Room(Player gameowner, Settings settings, String name, String password, int id){
+    public Room(Player gameowner, Settings settings, String name, String password){
+        id = static_id++;
         this.gameowner = gameowner;
+        this.players  = new ArrayList<Player>();
         this.players.add(this.gameowner);
         this.settings = settings;
         this.name = name;
         this.password = password;
-        this.id = id;
         try{
             selector = Selector.open();
+            Log.log("Room "+id+" created");
         }catch (Exception e){
             Log.log("Room "+id+" - "+e.getMessage());
         }
@@ -165,5 +168,9 @@ public class Room extends Thread {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String toString(){
+        return this.getRoomId()+"\t"+this.getRoomName()+"\t"+this.getSettings().getMaxplayer();
     }
 }

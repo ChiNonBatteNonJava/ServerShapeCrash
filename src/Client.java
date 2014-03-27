@@ -10,7 +10,7 @@ import java.util.Scanner;
 
 public class Client {
     public static void main(String[]args) throws IOException {
-        Client x=new Client("10.62.162.205", 4444);
+        Client x=new Client("127.0.0.1", 4444);
     }
     public SocketChannel sc;
 

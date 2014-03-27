@@ -49,30 +49,32 @@ public class ConnectionRequestManager extends Thread{
                     if (key.isReadable()) {
                         String msg = recive(key);
                         int requestType = -1;
+                        JSONObject obj = null;
                         try{
                             JSONParser parser = new JSONParser();
-                            System.out.println(parser.parse(msg));
-                            JSONObject obj = (JSONObject) parser.parse(msg);
-                            System.out.println((String)obj.get("request"));
+                            obj = (JSONObject) parser.parse(msg);
                             requestType = Integer.valueOf((String)obj.get("request"));
                         }catch(Exception e){}
                         String resp = "";
                         switch (requestType){
                             case LIST_ROOM:
-                                resp = "You have request the list of room.";
+                                listRoom(key);
                                 break;
                             case JOIN_ROOM:
-                                resp = "You want join in a room but it's not yet implements.";
+                                joinRoom(key, obj);
                                 break;
                             case CREATE_ROOM:
-                                resp = "You want join in a room but it's not yet implements.";
+                                createRoom(key, obj);
                                 break;
                             case EXIT:
                                 resp = "The connection will be closed.";
+                                send(key, resp);
+                                break;
                             default:
                                 resp ="Your request is invalide.";
+                                send(key, resp);
                         }
-                        send(key, resp);
+
                     }
                 }
 
@@ -82,15 +84,60 @@ public class ConnectionRequestManager extends Thread{
         }
     }
 
-    private String listRoom(){
-        return null;
+    private void listRoom(SelectionKey key) throws IOException {
+        String msg ="";
+        for(Room r: rooms){
+            msg += r.toString()+"\n";
+        }
+        send(key,msg);
     }
 
-    private void joinRoom(){
-
+    private void joinRoom(SelectionKey key, JSONObject obj) throws Exception {
+        String idStr = (String) obj.get("room_id");
+        String msg = "Request error";
+        if (idStr != null){
+            int id = Integer.valueOf(idStr);
+            boolean joined = false;
+            boolean found = false;
+            for(Room r: rooms){
+                if(r.getRoomId()==id){
+                    found = true;
+                    Player p = new Player((SocketChannel) key.channel());
+                    joined = r.addPlayer(p);
+                }
+            }
+            if(found){
+                if(joined){
+                    key.cancel();
+                    msg = "You are now in the room";
+                }else{
+                    msg = "Room full";
+                }
+            }else{
+                msg = "Room not found";
+            }
+        }
+        send(key,msg);
     }
 
-    private void createRoom(){
+    private void createRoom(SelectionKey key, JSONObject obj) throws Exception {
+        Player gameowner = new Player((SocketChannel)key.channel());
+        JSONObject set = (JSONObject) obj.get("settings");
+        String name = (String) obj.get("name");
+        String password = (String) obj.get("password");
+        if(set != null && name != null && password != null){
+            String maxPlayer = (String)set.get("max_player");
+            int iMaxPlayer = Integer.parseInt(maxPlayer);
+            Settings settings = new Settings(iMaxPlayer);
+            Room r = new Room(gameowner,settings,name,password);
+            rooms.add(r);
+            Thread t = new Thread(r);
+            t.start();
+            send(key, "Room created");
+            key.cancel();
+        }else{
+            send(key, "Room information invalid");
+        }
 
     }
 

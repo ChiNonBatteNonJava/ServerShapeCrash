@@ -14,7 +14,7 @@ import java.nio.channels.SocketChannel;
 public class TestClient {
     public static void main(String[] args) {
         try{
-
+            /*
             JSONObject json = new JSONObject();
             json.put("request",new Integer(2));
 
@@ -26,9 +26,8 @@ public class TestClient {
             sc.write(bb);
 
             Thread.sleep(10000);
+*/
 
-
-            /*
             JSONObject o = new JSONObject();
             o.put("prova",new Integer(2));
 
@@ -37,7 +36,7 @@ public class TestClient {
             JSONObject ob = (JSONObject)p.parse(j);
             System.out.println(ob.get("prova"));
 
-            /*
+
             JSONObject o1 = new JSONObject();
             o1.put("questa","e' sparta");
             o1.put("json",o);
@@ -50,7 +49,12 @@ public class TestClient {
             JSONObject j2 =(JSONObject) json.get("json");
 
             System.out.println(j2.get("altra"));
-            */
+
+            String b = (String) null;
+
+            int a = Integer.valueOf(b);
+            System.out.println(a);
+
 
 
 
