@@ -43,13 +43,13 @@ public class Room extends Thread {
         this.settings = settings;
         this.name = name;
         this.password = password;
+        this.status = STATUS_WAITING;
         try{
             selector = Selector.open();
             Log.log("Room "+id+" created");
         }catch (Exception e){
             Log.log("Room "+id+" - "+e.getMessage());
         }
-
     }
 
     public void run(){

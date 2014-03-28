@@ -175,14 +175,6 @@ public class ConnectionRequestManager extends Thread{
     public void exit(){
         finish = true;
         selector.wakeup();
-        selector.wakeup();
-        selector.wakeup();
-        selector.wakeup();
-        selector.wakeup();
-        selector.wakeup();
-        selector.wakeup();
-        selector.wakeup();
-        selector.wakeup();
     }
 
     public void addSocketChannel(SocketChannel sc) throws IOException {

@@ -1,3 +1,5 @@
+package inutile;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,7 +22,7 @@ public class SocketManager {
             while(byteBuffer.hasRemaining()){
                 msg += (char) byteBuffer.get();
             }
-            Log.log(sc.socket().getInetAddress().toString()+" > "+msg);
+
         }else{
             key.cancel();
             sc.close();
@@ -37,7 +39,7 @@ public class SocketManager {
         byteBuffer.put(msg.getBytes());
         byteBuffer.flip();
         sc.write(byteBuffer);
-        Log.log(sc.socket().getInetAddress().toString()+" < "+msg);
+
     }
 
 }

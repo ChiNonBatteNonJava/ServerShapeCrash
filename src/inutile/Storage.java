@@ -1,9 +1,10 @@
+package inutile;
+
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
-import java.util.logging.SocketHandler;
 
 /**
  * Created by ShilleR on 21/03/14.

@@ -1,3 +1,5 @@
+package inutile;
+
 /**
  * Created by ShilleR on 22/03/14.
  */

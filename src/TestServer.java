@@ -63,7 +63,7 @@ public class TestServer {
         finish = true;
         crm.exit();
         while(tcrm.isAlive()){}
-        Log.log("Server terminated");
+        Log.log("inutile.Server terminated");
     }
 }
 
