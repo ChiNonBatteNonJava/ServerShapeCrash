@@ -20,4 +20,8 @@ public class Player
         socket = sc;
     }
 
+    public SocketChannel getSocket(){
+        return socket;
+    }
+
 }

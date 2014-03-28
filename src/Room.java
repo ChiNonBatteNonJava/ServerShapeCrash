@@ -4,10 +4,7 @@ import org.json.simple.parser.JSONParser;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectableChannel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
@@ -65,7 +62,10 @@ public class Room extends Thread {
                     keyIterator.remove();
                     if (key.isReadable()) {
                         String msg = recive(key);
-
+                        JSONObject action = (JSONObject) new JSONParser().parse(msg);
+                        action.put("time",String.valueOf(System.currentTimeMillis()));
+                        action.put("action","2");
+                        broadcase(action);
                     }
                 }
             }catch (Exception e){
@@ -95,24 +95,40 @@ public class Room extends Thread {
         return msg;
     }
 
-    private void send(SelectionKey key , String msg) throws IOException {
-        SocketChannel sc = (SocketChannel) key.channel();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(512);
-        byteBuffer.clear();
-        byteBuffer.put(msg.getBytes());
-        byteBuffer.flip();
-        sc.write(byteBuffer);
-        Log.log(sc.socket().getInetAddress().toString()+" < "+msg);
+    private void broadcase(JSONObject json) throws IOException {
+        for(Player p: players){
+            send(p.getSocket(), json);
+        }
     }
 
+    private void send(SocketChannel sc, JSONObject json) throws IOException{
+        ByteBuffer byteBuffer = ByteBuffer.allocate(512);
+        byteBuffer.clear();
+        byteBuffer.put(json.toJSONString().getBytes());
+        byteBuffer.flip();
+        sc.write(byteBuffer);
+        Log.log(sc.socket().getInetAddress().toString()+" < "+json.toJSONString());
+    }
+
+    private void send(SelectionKey key , JSONObject json) throws IOException {
+        SocketChannel sc = (SocketChannel) key.channel();
+        send(sc, json);
+    }
 
     public ArrayList<Player> getPlayers() {
         return players;
     }
 
-    public boolean addPlayer(Player player){
-        if (settings.getMaxplayer() < players.size() ) {
+    public boolean addPlayer(Player player) throws IOException {
+        if (settings.getMaxplayer() > players.size()) {
             this.players.add(player);
+            selector.wakeup();
+            player.getSocket().register(selector,SelectionKey.OP_READ);
+            JSONObject json = new JSONObject();
+            json.put("action","1");
+            json.put("id",String.valueOf(Math.random()));
+            json.put("time",String.valueOf(System.currentTimeMillis()));
+            broadcase(json);
             return true;
         }
         return false;
@@ -172,5 +188,13 @@ public class Room extends Thread {
 
     public String toString(){
         return this.getRoomId()+"\t"+this.getRoomName()+"\t"+this.getSettings().getMaxplayer();
+    }
+
+    public JSONObject toJson(){
+        JSONObject json  = new JSONObject();
+        json.put("id",String.valueOf(this.getRoomId()));
+        json.put("name",this.getRoomName());
+        json.put("max_player",this.getSettings().getMaxplayer());
+        return json;
     }
 }

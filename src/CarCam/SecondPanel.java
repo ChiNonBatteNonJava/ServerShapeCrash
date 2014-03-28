@@ -1,6 +1,7 @@
 package CarCam;
 
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,16 +69,25 @@ public class SecondPanel extends JPanel implements KeyListener {
     public void connection(SocketChannel sc) throws IOException {
         sc = SocketChannel.open();
         sc.connect(new InetSocketAddress("127.0.0.1",4444));
+        Reciver r = new Reciver(sc);
+        Thread t = new Thread(r);
+        t.start();
         JSONObject request = new JSONObject();
-        request.put("request","2");
-        request.put("name","provae");
-        request.put("password","");
-        JSONObject settings = new JSONObject();
-        settings.put("max_player","8");
-        request.put("settings", settings);
+        //request.put("request","1");
+        //request.put("room_id","0");
+        //request.put("request","2");
+        //request.put("name","provae");
+        //request.put("password","");
+        //JSONObject settings = new JSONObject();
+        //settings.put("max_player","2");
+        //request.put("settings", settings);
         send(sc, request.toJSONString());
-        String resp = recive(sc);
-        System.out.println("resp = " + resp);
+        try{
+            Thread.sleep(1000);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        send(sc, request.toJSONString());
     }
 
     private String recive(SocketChannel sc) throws IOException, EOFException {
@@ -101,7 +111,6 @@ public class SecondPanel extends JPanel implements KeyListener {
         byteBuffer.flip();
         sc.write(byteBuffer);
     }
-
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -142,99 +151,32 @@ public class SecondPanel extends JPanel implements KeyListener {
     }
 }
 
+class Reciver extends Thread{
 
+    SocketChannel socket;
 
-
-
-
-
-
-
-class ServerSecondSend extends Thread{
-
-
-    SocketChannel sc;
-    SecondPanel p;
-
-    public ServerSecondSend(SecondPanel mp, SocketChannel s){
-        sc = s;
-        p = mp;
-    }
-
-    @Override
-    public void run() {
-        while(true){
-            try {
-                String msg = p.planeX+"="+p.planeY+"="+p.sfondoX+"="+p.sfondoY+"!";
-                send(msg);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                Thread.sleep(30);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    public void send(String msg) throws IOException {
-        ByteBuffer bb = ByteBuffer.allocate(256);
-        bb.put(msg.getBytes());
-        bb.flip();
-        sc.write(bb);
-    }
-}
-
-class ServerSecondRecive extends Thread{
-
-    SecondPanel p;
-    SocketChannel sc;
-
-    public ServerSecondRecive(SecondPanel mp, SocketChannel s){
-        p = mp;
-        sc = s;
+    public Reciver(SocketChannel sc){
+        socket = sc;
     }
 
     public void run(){
         while(true){
-            try {
-                String dir = recive();
-                String[] pos = dir.split("!");
-                String[] value = pos[0].split("=");
-                int px = p.planeX;
-                int py = p.planeY;
-                int sx = p.sfondoX;
-                int sy = p.sfondoY;
-                if(value.length==4){
-                    System.out.println("aaaaaaaaaaaaaaaAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-                    p.planeX = (int)(Integer.valueOf(value[0]))/2;
-                    p.planeY =  (int)(Integer.valueOf(value[1]))/2;
-                    p.sfondoX = (int)(Integer.valueOf(value[2]))/2;
-                    p.sfondoY = (int)(Integer.valueOf(value[3]));
-                    System.out.println(px+"><"+p.planeX);
-                    System.out.println(py+"><"+p.planeY);
-                    System.out.println(sx+"><"+p.sfondoX);
-                    System.out.println(sy+"><"+p.sfondoY);
+            try{
+                ByteBuffer bb = ByteBuffer.allocate(512);
+                int nByte = socket.read(bb);
+                String msg = "";
+                if(nByte!= -1){
+                    bb.flip();
+                    while(bb.hasRemaining()){
+                        msg += (char) bb.get();
+                    }
                 }
-            } catch (Exception e) {
+                System.out.println(msg);
+
+            }catch (Exception e ){
                 e.printStackTrace();
             }
-
         }
     }
 
-    public String recive() throws IOException {
-        ByteBuffer bb = ByteBuffer.allocate(256);
-        int dataRead = sc.read(bb);
-        bb.flip();
-        String msg = "";
-        if (dataRead != -1){
-            while(bb.hasRemaining()){
-                msg += (char) bb.get();
-            }
-        }
-        return msg;
-    }
 }

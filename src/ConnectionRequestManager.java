@@ -55,7 +55,7 @@ public class ConnectionRequestManager extends Thread{
                             obj = (JSONObject) parser.parse(msg);
                             requestType = Integer.valueOf((String)obj.get("request"));
                         }catch(Exception e){}
-                        String resp = "";
+                        JSONObject json = new JSONObject();
                         switch (requestType){
                             case LIST_ROOM:
                                 listRoom(key);
@@ -67,12 +67,15 @@ public class ConnectionRequestManager extends Thread{
                                 createRoom(key, obj);
                                 break;
                             case EXIT:
-                                resp = "The connection will be closed.";
-                                send(key, resp);
+                                json.put("response","1");
+                                json.put("message","connection closed");
+                                send(key, json);
+                                key.channel().close();
                                 break;
                             default:
-                                resp ="Your request is invalide.";
-                                send(key, resp);
+                                json.put("response","0");
+                                json.put("message","Invalid request");
+                                send(key, json);
                         }
 
                     }
@@ -85,16 +88,16 @@ public class ConnectionRequestManager extends Thread{
     }
 
     private void listRoom(SelectionKey key) throws IOException {
-        String msg ="";
+        JSONObject json = new JSONObject();
         for(Room r: rooms){
-            msg += r.toString()+"\n";
+            json.put(String.valueOf(r.getRoomId()),r.toJson());
         }
-        send(key,msg);
+        send(key,json);
     }
 
     private void joinRoom(SelectionKey key, JSONObject obj) throws Exception {
         String idStr = (String) obj.get("room_id");
-        String msg = "Request error";
+        JSONObject json = new JSONObject();
         if (idStr != null){
             int id = Integer.valueOf(idStr);
             boolean joined = false;
@@ -109,15 +112,22 @@ public class ConnectionRequestManager extends Thread{
             if(found){
                 if(joined){
                     key.cancel();
-                    msg = "You are now in the room";
                 }else{
-                    msg = "Room full";
+                    json.put("response","0");
+                    json.put("message","Room not found");
+                    send(key,json);
                 }
             }else{
-                msg = "Room not found";
+                json.put("response", "0");
+                json.put("message","Room not found");
+                send(key, json);
             }
+        }else{
+            json.put("response","0");
+            json.put("message","Invalid requset");
+            send(key,json);
         }
-        send(key,msg);
+
     }
 
     private void createRoom(SelectionKey key, JSONObject obj) throws Exception {
@@ -133,10 +143,16 @@ public class ConnectionRequestManager extends Thread{
             rooms.add(r);
             Thread t = new Thread(r);
             t.start();
-            send(key, "Room created");
+            JSONObject json = new JSONObject();
+            json.put("response", "1");
+            json.put("message","room created");
+            send(key, json);
             key.cancel();
         }else{
-            send(key, "Room information invalid");
+            JSONObject json = new JSONObject();
+            json.put("response","0");
+            json.put("message","Room information invalid");
+            send(key, json);
         }
 
     }
@@ -162,14 +178,14 @@ public class ConnectionRequestManager extends Thread{
         return msg;
     }
 
-    private void send(SelectionKey key , String msg) throws IOException {
+    private void send(SelectionKey key , JSONObject json) throws IOException {
         SocketChannel sc = (SocketChannel) key.channel();
         ByteBuffer byteBuffer = ByteBuffer.allocate(512);
         byteBuffer.clear();
-        byteBuffer.put(msg.getBytes());
+        byteBuffer.put(json.toJSONString().getBytes());
         byteBuffer.flip();
         sc.write(byteBuffer);
-        Log.log(sc.socket().getInetAddress().toString()+" < "+msg);
+        Log.log(sc.socket().getInetAddress().toString()+" < "+ json.toJSONString());
     }
 
     public void exit(){
