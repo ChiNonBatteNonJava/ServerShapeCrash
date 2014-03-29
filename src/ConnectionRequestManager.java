@@ -97,15 +97,17 @@ public class ConnectionRequestManager extends Thread{
 
     private void joinRoom(SelectionKey key, JSONObject obj) throws Exception {
         String idStr = (String) obj.get("room_id");
+        String idPly = (String) obj.get("id_player");
         JSONObject json = new JSONObject();
-        if (idStr != null){
+        if (idStr != null && idPly != null){
             int id = Integer.valueOf(idStr);
+            int id_player = Integer.valueOf(idPly);
             boolean joined = false;
             boolean found = false;
             for(Room r: rooms){
                 if(r.getRoomId()==id){
                     found = true;
-                    Player p = new Player((SocketChannel) key.channel());
+                    Player p = new Player((SocketChannel) key.channel(), id_player);
                     joined = r.addPlayer(p);
                 }
             }
@@ -131,11 +133,12 @@ public class ConnectionRequestManager extends Thread{
     }
 
     private void createRoom(SelectionKey key, JSONObject obj) throws Exception {
-        Player gameowner = new Player((SocketChannel)key.channel());
         JSONObject set = (JSONObject) obj.get("settings");
         String name = (String) obj.get("name");
         String password = (String) obj.get("password");
-        if(set != null && name != null && password != null){
+        String idPly = (String) obj.get("id_player");
+        if(set != null && name != null && password != null && idPly != null){
+            Player gameowner = new Player((SocketChannel)key.channel(), Integer.valueOf(idPly));
             String maxPlayer = (String)set.get("max_player");
             int iMaxPlayer = Integer.parseInt(maxPlayer);
             Settings settings = new Settings(iMaxPlayer);

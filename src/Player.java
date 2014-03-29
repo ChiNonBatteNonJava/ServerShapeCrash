@@ -16,7 +16,8 @@ public class Player
     private int id;
 
 
-    public Player(SocketChannel sc){
+    public Player(SocketChannel sc, int id){
+        this.id = id;
         socket = sc;
     }
 
@@ -24,4 +25,7 @@ public class Player
         return socket;
     }
 
+    public int getId(){
+        return id;
+    }
 }

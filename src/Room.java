@@ -65,7 +65,7 @@ public class Room extends Thread {
                         JSONObject action = (JSONObject) new JSONParser().parse(msg);
                         action.put("time",String.valueOf(System.currentTimeMillis()));
                         action.put("action","2");
-                        broadcase(action);
+                        broadcast(action);
                     }
                 }
             }catch (Exception e){
@@ -95,7 +95,7 @@ public class Room extends Thread {
         return msg;
     }
 
-    private void broadcase(JSONObject json) throws IOException {
+    private void broadcast(JSONObject json) throws IOException {
         for(Player p: players){
             send(p.getSocket(), json);
         }
@@ -124,11 +124,12 @@ public class Room extends Thread {
             this.players.add(player);
             selector.wakeup();
             player.getSocket().register(selector,SelectionKey.OP_READ);
+            JSONObject players = new JSONObject();
             JSONObject json = new JSONObject();
             json.put("action","1");
-            json.put("id",String.valueOf(Math.random()));
+            json.put("id_player",String.valueOf(player.getId()));
             json.put("time",String.valueOf(System.currentTimeMillis()));
-            broadcase(json);
+            broadcast(json);
             return true;
         }
         return false;
