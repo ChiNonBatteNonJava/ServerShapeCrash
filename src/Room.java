@@ -65,17 +65,61 @@ public class Room extends Thread {
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
                 Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
                 while(keyIterator.hasNext()) {
+                    Log.log("richiesta arrivata");
                     SelectionKey key = keyIterator.next();
                     keyIterator.remove();
                     if (key.isReadable()) {
                         String msg = ((Player)key.attachment()).recive();
-
+                        JSONParser parser = new JSONParser();
+                        JSONObject json = null;
+                        try{
+                            json = (JSONObject) parser.parse(msg);
+                        }catch (Exception e){
+                            json = new JSONObject();
+                        }
+                        Long longCode = (Long) json.get("code");
+                        Integer requestCode = longCode == null ? -2 : Integer.valueOf(longCode.intValue());
+                        switch (requestCode){
+                            case ConnectionRequestManager.PLAY_START:
+                                if(((Player)key.attachment())==gameowner){
+                                    gameStart();
+                                }
+                                break;
+                            case ConnectionRequestManager.PLAYER_ACTION:
+                                //to be defined
+                                broadcast(json);
+                                break;
+                            case ConnectionRequestManager.LEFETED_ROOM:
+                                //removePlayer();
+                                break;
+                            case ConnectionRequestManager.PLAY_END:
+                                gameEnd();
+                                break;
+                            case ConnectionRequestManager.MODIFIED_ROOM:
+                                if(((Player)key.attachment())==gameowner){
+                                    //modify game
+                                }
+                                break;
+                            case ConnectionRequestManager.EXIT:
+                                //exit
+                                break;
+                            default:
+                                json.put("code", ConnectionRequestManager.ERROR);
+                                json.put("message","Invalid request");
+                                ((Player) key.attachment()).send(json);
+                        }
                     }
                 }
             }catch (Exception e){
                 Log.log(e.getMessage());
             }
         }
+    }
+
+    private void gameStart(){
+    }
+
+    private void gameEnd(){
     }
 
     private void broadcast(JSONObject json) throws IOException {
@@ -93,6 +137,8 @@ public class Room extends Thread {
             return false;
         }
 
+        player.getSocket().configureBlocking(false);
+        selector.wakeup();
         player.getSocket().register(selector, SelectionKey.OP_READ, player);
         JSONArray arrayPlayers = new JSONArray();
         for(Player p: players){

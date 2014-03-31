@@ -60,9 +60,11 @@ public class ConnectionRequestManager extends Thread{
                         JSONObject json = null;
                         try{
                             json = (JSONObject) parser.parse(msg);
-                        }catch (Exception e){}
+                        }catch (Exception e){
+                            json = new JSONObject();
+                        }
                         Long longCode = (Long) json.get("code");
-                        Integer requestCode = longCode == null ? null : Integer.valueOf(longCode.intValue());
+                        Integer requestCode = longCode == null ? -2 : Integer.valueOf(longCode.intValue());
                         switch (requestCode){
                             case LIST_ROOM:
                                 listRoom(key);
@@ -74,13 +76,13 @@ public class ConnectionRequestManager extends Thread{
                                 createRoom(key, json);
                                 break;
                             case EXIT:
-                                json.put("response","1");
+                                json.put("code",EXIT);
                                 json.put("message","connection closed");
                                 send(key, json);
                                 key.channel().close();
                                 break;
                             default:
-                                json.put("response","0");
+                                json.put("code",EXIT);
                                 json.put("message","Invalid request");
                                 send(key, json);
                         }
@@ -110,7 +112,6 @@ public class ConnectionRequestManager extends Thread{
         Long longRoomId = (Long) obj.get("room_id");
         Integer roomId = longRoomId == null ? null : Integer.valueOf(longRoomId.intValue());
         Room room = null;
-        Log.log(playerId+"--"+roomId+">>>");
         for(Room r: rooms){
             if(roomId != null && r.getRoomId() == roomId){
                 room = r;
@@ -157,6 +158,8 @@ public class ConnectionRequestManager extends Thread{
             Room room = new Room(gameOwner,settings, roomName, roomPassword,passwordRequest==1);
             rooms.add(room);
             key.cancel();
+            Thread t = new Thread(room);
+            t.start();
         }else{
             JSONObject error = new JSONObject();
             error.put("code", ERROR);

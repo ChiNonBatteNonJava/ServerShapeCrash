@@ -12,16 +12,6 @@ public class Test {
     public static void main(String[] args) {
         try{
 
-            JSONObject json = new JSONObject();
-            json.put("ciao",1);
-            json.put("qwer","stringa");
-
-            JSONParser parser = new JSONParser();
-            JSONObject obj = (JSONObject) parser.parse(json.toJSONString());
-            String s = (String) obj.get("qwer");
-
-            Long longInt = (Long) obj.get("ciao");
-            Integer intero = longInt == null ? null : Integer.valueOf(longInt.intValue());
 
 
 
