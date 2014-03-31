@@ -1,0 +1,130 @@
+Client:
+	list room
+	{
+	 "code"	:0
+	}
+
+	join room
+	{
+	 "code"		:1,
+	 "room_id"	:`(int) room_id`,
+	 "player_id"	:`(int) player_id`,
+	}
+ 
+	create room
+	{
+	 "code"	:2,
+	 "player_id"		:`(int) player_id`,
+	 "room_name"		:`(String) room_name`,
+	 "room_password"	:`(String) password`,
+	 "password_request	:`1=y 0=n`,
+	 "settings"		:`(json)settings`,
+	}
+	  
+	manage room
+	{
+	 "code"		:3,
+	 "settings"	:`(json) new_settings`
+	}
+	
+	left room
+	{
+	 "code"		:4
+	}
+
+	start play
+	{
+	 "code"		:5
+	}
+
+	action
+	{
+	 "code"		:6
+	 to be define
+	}
+	
+	end play
+	{
+	 "code"	:7
+	}
+
+	exit
+	{
+	 "code: 100
+	}
+
+Server
+	error
+	{
+	 "code"		:-1,
+	 "error_code"	:`(int) error_code`,
+	 "message"	:`(String) msg`
+	}
+
+	list room
+	{
+	 "code"	:0
+	}
+	
+	joined room
+	{
+	 "code"	     :1,
+	 "player"    :[JsonArray player]
+	}
+
+	room created
+	{
+	 "code"		:2,
+	 "room_id"	:`(int) room_id`
+	}
+
+	room modeified - sent to all
+	{
+	 "code"		:3
+	}
+
+	lefted room
+	{
+	 "code"		:4
+	}
+
+	play start
+	{
+	 "cdoe"		:5
+	}
+	
+	player action
+	{
+	 "code"		:6,
+	 to be defined
+	}
+
+	end play
+	{
+	 "code"		:7
+	}
+
+	exit
+	{
+	 "code"     :100
+	}
+	 
+	add player
+	{
+	 "code"		:101,
+	 "player_id"	:`(int) palyer_id`,
+	 player info to be defined
+	}
+	
+	remove player
+	{
+	 "code"		:102,
+	 "player_id"	:`(int) player_id`
+	}
+	
+
+
+Settings
+    {
+     "max_player" : 8
+    }

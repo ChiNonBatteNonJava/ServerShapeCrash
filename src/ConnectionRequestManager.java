@@ -2,6 +2,7 @@
  * Created by ShilleR on 25/03/14.
  */
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -16,11 +17,19 @@ import java.util.Set;
 public class ConnectionRequestManager extends Thread{
 
 
-    final static int LIST_ROOM   = 0;
-    final static int JOIN_ROOM   = 1;
-    final static int CREATE_ROOM = 2;
-    final static int EXIT        = 10000;
-    final static int TIME_OUT    = 30000; // 30 sec;
+    final static int ERROR          = -1;
+    final static int LIST_ROOM      = 0;
+    final static int JOIN_ROOM      = 1;
+    final static int CREATE_ROOM    = 2;
+    final static int MODIFIED_ROOM  = 3;
+    final static int LEFETED_ROOM   = 4;
+    final static int PLAY_START     = 5;
+    final static int PLAYER_ACTION  = 6;
+    final static int PLAY_END       = 7;
+    final static int EXIT           = 100;
+    final static int PLAYER_JOIN    = 101;
+    final static int PLAYER_LEFT    = 102;
+    final static int TIME_OUT       = 30000; // 30 sec;
 
     private ArrayList<Room> rooms;
 
@@ -37,7 +46,6 @@ public class ConnectionRequestManager extends Thread{
 
         while(!finish) {
             try{
-
                 int readyChannels = selector.select();
                 if(readyChannels == 0){ Thread.sleep(1); continue;}
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
@@ -48,23 +56,22 @@ public class ConnectionRequestManager extends Thread{
                     keyIterator.remove();
                     if (key.isReadable()) {
                         String msg = recive(key);
-                        int requestType = -1;
-                        JSONObject obj = null;
+                        JSONParser parser = new JSONParser();
+                        JSONObject json = null;
                         try{
-                            JSONParser parser = new JSONParser();
-                            obj = (JSONObject) parser.parse(msg);
-                            requestType = Integer.valueOf((String)obj.get("request"));
-                        }catch(Exception e){}
-                        JSONObject json = new JSONObject();
-                        switch (requestType){
+                            json = (JSONObject) parser.parse(msg);
+                        }catch (Exception e){}
+                        Long longCode = (Long) json.get("code");
+                        Integer requestCode = longCode == null ? null : Integer.valueOf(longCode.intValue());
+                        switch (requestCode){
                             case LIST_ROOM:
                                 listRoom(key);
                                 break;
                             case JOIN_ROOM:
-                                joinRoom(key, obj);
+                                joinRoom(key, json);
                                 break;
                             case CREATE_ROOM:
-                                createRoom(key, obj);
+                                createRoom(key, json);
                                 break;
                             case EXIT:
                                 json.put("response","1");
@@ -77,7 +84,6 @@ public class ConnectionRequestManager extends Thread{
                                 json.put("message","Invalid request");
                                 send(key, json);
                         }
-
                     }
                 }
 
@@ -88,76 +94,57 @@ public class ConnectionRequestManager extends Thread{
     }
 
     private void listRoom(SelectionKey key) throws IOException {
-        JSONObject json = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
         for(Room r: rooms){
-            json.put(String.valueOf(r.getRoomId()),r.toJson());
+            jsonArray.add(r.toJson());
         }
-        send(key,json);
+        JSONObject json = new JSONObject();
+        json.put("code",0);
+        json.put("rooms",jsonArray);
     }
 
     private void joinRoom(SelectionKey key, JSONObject obj) throws Exception {
-        String idStr = (String) obj.get("room_id");
-        String idPly = (String) obj.get("id_player");
-        JSONObject json = new JSONObject();
-        if (idStr != null && idPly != null){
-            int id = Integer.valueOf(idStr);
-            int id_player = Integer.valueOf(idPly);
-            boolean joined = false;
-            boolean found = false;
-            for(Room r: rooms){
-                if(r.getRoomId()==id){
-                    found = true;
-                    Player p = new Player((SocketChannel) key.channel(), id_player);
-                    joined = r.addPlayer(p);
-                }
+        Long longPlayerId = (Long) obj.get("player_id");
+        Integer playerId = longPlayerId == null ? null : Integer.valueOf(longPlayerId.intValue());
+        Long longRoomId = (Long) obj.get("room_id");
+        Integer roomId = longRoomId == null ? null : Integer.valueOf(longRoomId.intValue());
+        Room room = null;
+        for(Room r: rooms){
+            if(roomId != null && r.getRoomId() == roomId){
+                room = r;
             }
-            if(found){
-                if(joined){
-                    key.cancel();
-                }else{
-                    json.put("response","0");
-                    json.put("message","Room not found");
-                    send(key,json);
-                }
-            }else{
-                json.put("response", "0");
-                json.put("message","Room not found");
-                send(key, json);
-            }
-        }else{
-            json.put("response","0");
-            json.put("message","Invalid requset");
-            send(key,json);
         }
-
+        if(playerId != null && roomId != null && room != null){
+            Player player = new Player((SocketChannel) key.channel(), playerId);
+            room.addPlayer(player);
+        }else{
+            JSONObject error = new JSONObject();
+            error.put("code",-1);
+            error.put("message","invalid join room request");
+            send(key, error);
+        }
     }
 
     private void createRoom(SelectionKey key, JSONObject obj) throws Exception {
-        JSONObject set = (JSONObject) obj.get("settings");
-        String name = (String) obj.get("name");
-        String password = (String) obj.get("password");
-        String idPly = (String) obj.get("id_player");
-        if(set != null && name != null && password != null && idPly != null){
-            Player gameowner = new Player((SocketChannel)key.channel(), Integer.valueOf(idPly));
-            String maxPlayer = (String)set.get("max_player");
-            int iMaxPlayer = Integer.parseInt(maxPlayer);
-            Settings settings = new Settings(iMaxPlayer);
-            Room r = new Room(gameowner,settings,name,password);
-            rooms.add(r);
-            Thread t = new Thread(r);
-            t.start();
-            JSONObject json = new JSONObject();
-            json.put("response", "1");
-            json.put("message","room created");
-            send(key, json);
-            key.cancel();
+        Long longPlayerId = (Long) obj.get("player_id");
+        Integer playerId = longPlayerId == null ? null : Integer.valueOf(longPlayerId.intValue());
+        String roomName = (String) obj.get("room_name");
+        String roomPassword = (String) obj.get("room_password");
+        Long longPasswordRequest = (Long) obj.get("password_request");
+        Integer passwordRequest = longPasswordRequest == null ? null : Integer.valueOf(longPasswordRequest.intValue());
+        JSONObject jsonSetting = (JSONObject) obj.get("settings");
+        Long longMaxPlayer = (Long) jsonSetting.get("max_player");
+        Integer maxPlayer = longMaxPlayer == null ? null : Integer.valueOf(longMaxPlayer.intValue());
+        Settings settings = maxPlayer == null ? null : new Settings(maxPlayer);
+        if(playerId != null && roomName != null && roomPassword != null && passwordRequest != null && settings != null){
+            Player gameOwner = new Player((SocketChannel) key.channel(), playerId);
+            Room room = new Room(gameOwner,settings, roomName, roomPassword,passwordRequest==1);
         }else{
-            JSONObject json = new JSONObject();
-            json.put("response","0");
-            json.put("message","Room information invalid");
-            send(key, json);
+            JSONObject error = new JSONObject();
+            error.put("code", -1);
+            error.put("message", "invalid create room request");
+            send(key, error);
         }
-
     }
 
     private String recive(SelectionKey key) throws IOException, EOFException {

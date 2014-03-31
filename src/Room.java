@@ -1,3 +1,4 @@
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -29,20 +30,26 @@ public class Room extends Thread {
     private int id;
     private String name;
     private String password;
+    private Boolean passwordRequest;
     private boolean finish;
     private static int static_id = 0;
 
-    public Room(Player gameowner, Settings settings, String name, String password){
+    public Room(Player gameowner, Settings settings, String name, String password, Boolean passwordRequest){
         id = static_id++;
         this.gameowner = gameowner;
         this.players  = new ArrayList<Player>();
-        this.players.add(this.gameowner);
         this.settings = settings;
         this.name = name;
         this.password = password;
+        this.passwordRequest = passwordRequest;
         this.status = STATUS_WAITING;
         try{
             selector = Selector.open();
+            JSONObject json = new JSONObject();
+            json.put("code", 2);
+            json.put("room_id",id);
+            gameowner.send(json);
+            addPlayer(gameowner);
             Log.log("Room "+id+" created");
         }catch (Exception e){
             Log.log("Room "+id+" - "+e.getMessage());
@@ -61,11 +68,8 @@ public class Room extends Thread {
                     SelectionKey key = keyIterator.next();
                     keyIterator.remove();
                     if (key.isReadable()) {
-                        String msg = recive(key);
-                        JSONObject action = (JSONObject) new JSONParser().parse(msg);
-                        action.put("time",String.valueOf(System.currentTimeMillis()));
-                        action.put("action","2");
-                        broadcast(action);
+                        String msg = ((Player)key.attachment()).recive();
+
                     }
                 }
             }catch (Exception e){
@@ -74,45 +78,10 @@ public class Room extends Thread {
         }
     }
 
-    private String recive(SelectionKey key) throws IOException, EOFException {
-        String msg = "";
-        ByteBuffer byteBuffer = ByteBuffer.allocate(512);
-        byteBuffer.clear();
-        SocketChannel sc = (SocketChannel) key.channel();
-        int byteRead = sc.read(byteBuffer);
-        if(byteRead != -1){
-            byteBuffer.flip();
-            while(byteBuffer.hasRemaining()){
-                msg += (char) byteBuffer.get();
-            }
-            Log.log(sc.socket().getInetAddress().toString()+" > "+msg);
-        }else{
-            key.cancel();
-            sc.close();
-            String er = sc.socket().getInetAddress().toString()+" - Connection closed";
-            throw new EOFException(er);
-        }
-        return msg;
-    }
-
     private void broadcast(JSONObject json) throws IOException {
         for(Player p: players){
-            send(p.getSocket(), json);
+            p.send(json);
         }
-    }
-
-    private void send(SocketChannel sc, JSONObject json) throws IOException{
-        ByteBuffer byteBuffer = ByteBuffer.allocate(512);
-        byteBuffer.clear();
-        byteBuffer.put(json.toJSONString().getBytes());
-        byteBuffer.flip();
-        sc.write(byteBuffer);
-        Log.log(sc.socket().getInetAddress().toString()+" < "+json.toJSONString());
-    }
-
-    private void send(SelectionKey key , JSONObject json) throws IOException {
-        SocketChannel sc = (SocketChannel) key.channel();
-        send(sc, json);
     }
 
     public ArrayList<Player> getPlayers() {
@@ -120,23 +89,24 @@ public class Room extends Thread {
     }
 
     public boolean addPlayer(Player player) throws IOException {
-        if (settings.getMaxplayer() > players.size()) {
-            this.players.add(player);
-            selector.wakeup();
-            player.getSocket().register(selector,SelectionKey.OP_READ);
-            JSONObject players = new JSONObject();
-            JSONObject json = new JSONObject();
-            json.put("action","1");
-            json.put("id_player",String.valueOf(player.getId()));
-            json.put("time",String.valueOf(System.currentTimeMillis()));
-            broadcast(json);
-            return true;
+        player.getSocket().register(selector, SelectionKey.OP_READ, player);
+        JSONArray arrayPlayers = new JSONArray();
+        for(Player p: players){
+            arrayPlayers.add(p.toJson());
         }
+        JSONObject listPlayer = new JSONObject();
+        listPlayer.put("code",ConnectionRequestManager.JOIN_ROOM);
+        listPlayer.put("players",arrayPlayers);
+        player.send(listPlayer);
+
+        JSONObject json = new JSONObject();
+        json.put("code",101);
+        json.put("player_id",player.getId());
+        broadcast(json);
         return false;
     }
 
     public void removePlayer(Player player){
-        this.players.remove(player);
     }
 
     public Settings getSettings() {
