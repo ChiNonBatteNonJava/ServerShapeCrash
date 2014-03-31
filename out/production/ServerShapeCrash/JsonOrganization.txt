@@ -16,7 +16,7 @@ Client:
 	 "code"	:2,
 	 "player_id"		:`(int) player_id`,
 	 "room_name"		:`(String) room_name`,
-	 "room_password		:`(String) password`,
+	 "room_password"	:`(String) password`,
 	 "password_request	:`1=y 0=n`,
 	 "settings"		:`(json)settings`,
 	}
@@ -61,7 +61,7 @@ Server
 	 "message"	:`(String) msg`
 	}
 
-	positive generic
+	list room
 	{
 	 "code"	:0
 	}
@@ -122,3 +122,9 @@ Server
 	 "player_id"	:`(int) player_id`
 	}
 	
+
+
+Settings
+    {
+     "max_player" : 8
+    }

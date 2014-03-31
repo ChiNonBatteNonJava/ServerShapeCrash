@@ -89,6 +89,10 @@ public class Room extends Thread {
     }
 
     public boolean addPlayer(Player player) throws IOException {
+        if(players.size() >= settings.getMaxplayer()){
+            return false;
+        }
+
         player.getSocket().register(selector, SelectionKey.OP_READ, player);
         JSONArray arrayPlayers = new JSONArray();
         for(Player p: players){
@@ -98,12 +102,14 @@ public class Room extends Thread {
         listPlayer.put("code",ConnectionRequestManager.JOIN_ROOM);
         listPlayer.put("players",arrayPlayers);
         player.send(listPlayer);
-
+        players.add(player);
         JSONObject json = new JSONObject();
         json.put("code",101);
         json.put("player_id",player.getId());
         broadcast(json);
-        return false;
+
+        return true;
+
     }
 
     public void removePlayer(Player player){

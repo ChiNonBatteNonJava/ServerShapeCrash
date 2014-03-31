@@ -99,8 +99,9 @@ public class ConnectionRequestManager extends Thread{
             jsonArray.add(r.toJson());
         }
         JSONObject json = new JSONObject();
-        json.put("code",0);
+        json.put("code",LIST_ROOM);
         json.put("rooms",jsonArray);
+        send(key,json);
     }
 
     private void joinRoom(SelectionKey key, JSONObject obj) throws Exception {
@@ -109,17 +110,32 @@ public class ConnectionRequestManager extends Thread{
         Long longRoomId = (Long) obj.get("room_id");
         Integer roomId = longRoomId == null ? null : Integer.valueOf(longRoomId.intValue());
         Room room = null;
+        Log.log(playerId+"--"+roomId+">>>");
         for(Room r: rooms){
             if(roomId != null && r.getRoomId() == roomId){
                 room = r;
+                break;
             }
         }
-        if(playerId != null && roomId != null && room != null){
-            Player player = new Player((SocketChannel) key.channel(), playerId);
-            room.addPlayer(player);
+        if(playerId != null && roomId != null){
+            if(room == null){
+                JSONObject error = new JSONObject();
+                error.put("code",ERROR);
+                error.put("message","Room not found");
+                send(key,error);
+            }else{
+                Player player = new Player((SocketChannel) key.channel(), playerId);
+                if(!room.addPlayer(player)){
+                    JSONObject error = new JSONObject();
+                    error.put("code", ERROR);
+                    error.put("message","the room is full");
+                }else{
+                    key.cancel();
+                }
+            }
         }else{
             JSONObject error = new JSONObject();
-            error.put("code",-1);
+            error.put("code",ERROR);
             error.put("message","invalid join room request");
             send(key, error);
         }
@@ -139,9 +155,11 @@ public class ConnectionRequestManager extends Thread{
         if(playerId != null && roomName != null && roomPassword != null && passwordRequest != null && settings != null){
             Player gameOwner = new Player((SocketChannel) key.channel(), playerId);
             Room room = new Room(gameOwner,settings, roomName, roomPassword,passwordRequest==1);
+            rooms.add(room);
+            key.cancel();
         }else{
             JSONObject error = new JSONObject();
-            error.put("code", -1);
+            error.put("code", ERROR);
             error.put("message", "invalid create room request");
             send(key, error);
         }
