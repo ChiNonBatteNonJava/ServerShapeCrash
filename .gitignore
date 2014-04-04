@@ -4,6 +4,6 @@
 .name
 *.iml
 *.idea
-*.jar
+
 *.war
 *.ear
