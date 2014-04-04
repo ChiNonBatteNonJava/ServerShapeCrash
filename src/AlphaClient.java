@@ -15,7 +15,7 @@ public class AlphaClient {
     public static void main(String[]args) throws IOException {
 
         AlphaClient x = new AlphaClient("10.62.162.205", 4444);
-        x.createRoom();
+        x.action();
 
     }
     private SocketChannel sock;
@@ -95,7 +95,7 @@ public class AlphaClient {
         }
 
         try {
-            ByteBuffer buff = ByteBuffer.allocate(1024);
+            ByteBuffer buff = ByteBuffer.allocate(512);
             buff.clear();
             buff.put(js.toJSONString().getBytes());
             buff.flip();
@@ -132,69 +132,91 @@ public class AlphaClient {
     }
 
     public void startPlay(){
-
-
-    }
-
-    public void action(){
-
-
-    }
-
-    public void endPlay(){
-
-
-    }
-
-    public void exit() throws JSONException {
         JSONObject js = new JSONObject();
         try {
-            js.put("code", "100");
+            js.put("code", 5);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        Send sender;
-        sender = new Send(this.sock, js.toString());
-        Thread b = new Thread(sender);
-        b.start();
+
+        try {
+            ByteBuffer buff = ByteBuffer.allocate(512);
+            buff.clear();
+            buff.put(js.toJSONString().getBytes());
+            buff.flip();
+            this.sock.write(buff);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
-    class Send extends Thread{
-        private final SocketChannel sock;
-        private final String jString;
-        SocketChannel sc;
-        public Send(SocketChannel sc, String jString) {
-            this.sock = sc;
-            this.jString = jString;
-        }
-        public void run() {
-            while (true) {
-                try {
-                    System.out.println("42 madafakaaaaaa");
-                    ByteBuffer buff = ByteBuffer.allocate(512);
-                    buff.clear();
-                    buff.put(jString.getBytes());
-                    buff.flip();
-                    sc.write(buff);
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
-                }
-
-
-            }
+    public void action(){
+        JSONObject js = new JSONObject();
+        try {
+            js.put("code", 6);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
 
+        try {
+            ByteBuffer buff = ByteBuffer.allocate(512);
+            buff.clear();
+            buff.put(js.toJSONString().getBytes());
+            buff.flip();
+            this.sock.write(buff);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
-}
+    public void endPlay(){
+        JSONObject js = new JSONObject();
+        try {
+            js.put("code", 7);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-class Recive extends Thread{
+        try {
+            ByteBuffer buff = ByteBuffer.allocate(512);
+            buff.clear();
+            buff.put(js.toJSONString().getBytes());
+            buff.flip();
+            this.sock.write(buff);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public void exit(){
+        JSONObject js = new JSONObject();
+        try {
+            js.put("code", 100);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            ByteBuffer buff = ByteBuffer.allocate(512);
+            buff.clear();
+            buff.put(js.toJSONString().getBytes());
+            buff.flip();
+            this.sock.write(buff);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+
+class Recive extends Thread {
     SocketChannel sc;
+
     public Recive(SocketChannel sc) {
         this.sc = sc;
     }
-    public void run(){
-        while(true) {
+
+    public void run() {
+        while (true) {
             try {
                 ByteBuffer buff = ByteBuffer.allocate(512);
                 buff.clear();
@@ -213,7 +235,7 @@ class Recive extends Thread{
         }
 
     }
-
-
-
 }
+}
+
+
