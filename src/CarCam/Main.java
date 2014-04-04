@@ -1,13 +1,8 @@
 package CarCam;
 
-import org.json.simple.JSONObject;
-import sun.org.mozilla.javascript.internal.json.JsonParser;
-
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Iterator;
-import java.util.TimerTask;
 
 /**
  * Created by ShilleR on 18/03/14.

@@ -18,8 +18,8 @@ public class Client {
 
         sc = SocketChannel.open();
         sc.connect(new InetSocketAddress(ip, porta));
-        Recive r;
-        r = new Recive(sc);
+        Receive r;
+        r = new Receive(sc);
         Thread a = new Thread(r);
         a.start();
         Send q;
@@ -30,9 +30,9 @@ public class Client {
 
 }
 
-class Recive extends Thread{
+class Receive extends Thread{
     SocketChannel sc;
-    public Recive(SocketChannel sc) {
+    public Receive(SocketChannel sc) {
         this.sc = sc;
     }
     public void run(){
