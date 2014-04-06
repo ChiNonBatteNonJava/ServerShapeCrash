@@ -101,7 +101,8 @@ public class Room extends Thread {
                                 }
                                 break;
                             case ConnectionRequestManager.EXIT:
-                                //exit
+                                key.cancel();
+                                key.channel().close();
                                 break;
                             default:
                                 json.put("code", ConnectionRequestManager.ERROR);

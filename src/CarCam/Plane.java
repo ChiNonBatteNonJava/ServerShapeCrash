@@ -14,6 +14,8 @@ public class Plane {
     public ImageIcon plane;
     public JPanel parent;
 
+
+
     public Plane(int x, int y, JPanel parent, int id){
         this.parent = parent;
         plane = new ImageIcon("plane.png");

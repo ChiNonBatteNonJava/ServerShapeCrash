@@ -12,11 +12,6 @@ public class Test {
     public static void main(String[] args) {
         try{
 
-
-
-
-
-
             String e = "{\"ciao\":[1,2,3,4,5]}#";
             String[] s = e.split("#");
             System.out.println(s.length);

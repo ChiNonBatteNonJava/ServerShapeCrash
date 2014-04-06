@@ -3,6 +3,7 @@ import org.json.simple.JSONObject;
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -19,7 +20,7 @@ public class Player
     private float direction;                        //?
     private float speed;                              //?
     private int id;
-
+    private SelectionKey selectionKey;
 
     public Player(SocketChannel sc, int id){
         this.id = id;
@@ -47,7 +48,9 @@ public class Player
             Log.log(socket.socket().getInetAddress().toString()+" > "+msg);
         }else{
             String er = socket.socket().getInetAddress().toString()+" - Connection closed";
-            throw new EOFException(er);
+            JSONObject json = new JSONObject();
+            json.put("code",ConnectionRequestManager.EXIT);
+            msg = json.toJSONString();
         }
         return msg;
     }
@@ -67,4 +70,7 @@ public class Player
         return json;
     }
 
+    public void setKey(SelectionKey key){
+        selectionKey = key;
+    }
 }
