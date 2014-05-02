@@ -66,7 +66,7 @@ public class SecondPanel extends JPanel implements KeyListener {
 
     public void connection() throws IOException {
         sc = SocketChannel.open();
-        sc.connect(new InetSocketAddress("127.0.0.1",4444));
+        sc.connect(new InetSocketAddress("10.62.128.135",4444));
         Reciver r = new Reciver(sc, planes, this);
         Thread t = new Thread(r);
         t.start();

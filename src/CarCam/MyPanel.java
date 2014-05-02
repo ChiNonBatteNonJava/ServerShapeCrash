@@ -32,7 +32,7 @@ public class MyPanel extends JPanel implements KeyListener {
         SocketChannel sc = null;
         try {
             sc = SocketChannel.open();
-            sc.connect(new InetSocketAddress("10.62.162.205",4444));
+            sc.connect(new InetSocketAddress("10.62.128.135",4444));
         } catch (IOException e) {
             e.printStackTrace();
         }
