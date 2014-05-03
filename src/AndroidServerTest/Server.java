@@ -32,21 +32,17 @@ public class Server {
             ssc.bind(new InetSocketAddress(4444));
             while(true){
                 SocketChannel sc = ssc.accept();
-                System.out.println("Asdca");
                 String msg = read(sc);
                 System.out.println(msg);
-                scList.add(sc);
-                //JSONObject json = (JSONObject) new JSONParser().parse(msg);
-                //leggo dati creo una macchina
-                //aggiungo la macchina ad un array
-                //nuove thread per ricevere dati da quella macchina
+                JSONObject json = (JSONObject) new JSONParser().parse(msg);
+                json.put("code",0);
                 CarReciver cr = new CarReciver(sc,scList);
                 Thread t = new Thread(cr);
                 t.start();
                 for(SocketChannel s: scList){
-                    //dico a tutti che e' arrivata una nuova macchina
-                    write(s,"asdfa");
+                    write(s, json.toJSONString());
                 }
+                scList.add(sc);
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -89,27 +85,19 @@ class CarReciver extends Thread{
         scList = al;
     }
 
-    public void run(){
-        try {
-            while(true){
+    public void run() {
+
+        while (true) {
+            try {
                 String msg = read(sc);
-                /*
                 JSONObject json = (JSONObject) new JSONParser().parse(msg);
-                Long l = (Long) json.get("up");
-                Integer up = Integer.valueOf(l.intValue());
-                l = (Long) json.get("down");
-                Integer down = Integer.valueOf(l.intValue());
-                l = (Long) json.get("left");
-                Integer left = Integer.valueOf(l.intValue());
-                l = (Long) json.get("right");
-                Integer right = Integer.valueOf(l.intValue());
-                */
-                for(SocketChannel s: scList){
-                    write(s, "asd");//json.toJSONString());
+                json.put("code", 1);
+                for (SocketChannel s : scList) {
+                    write(s, json.toJSONString());
                 }
+            } catch (Exception e) {
+                //e.printStackTrace();
             }
-        }catch (Exception e){
-            e.printStackTrace();
         }
     }
 
@@ -125,6 +113,7 @@ class CarReciver extends Thread{
                 msg += (char) byteBuffer.get();
             }
         }
+        System.out.println(msg);
         return msg;
     }
 
