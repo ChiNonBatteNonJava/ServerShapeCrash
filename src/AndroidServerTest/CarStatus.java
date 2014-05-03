@@ -7,13 +7,18 @@ package AndroidServerTest;
 import com.badlogic.gdx.math.Vector3;
 import org.json.simple.JSONObject;
 
-public class PhysicCarStatus {
+public class CarStatus {
     public float steering=0;
     public Vector3 position;
     public Vector3 linearVelocity;
     public Vector3 angularVelocity;
-    public long time;
+    long time;
 
+    public CarStatus(){
+        position = new Vector3();
+        linearVelocity = new Vector3();
+        angularVelocity = new Vector3();
+    }
 
     public JSONObject toJson(){
         JSONObject json = new JSONObject();
