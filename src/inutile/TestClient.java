@@ -16,20 +16,6 @@ import java.nio.channels.SocketChannel;
 public class TestClient {
     public static void main(String[] args) {
         try{
-            /*
-            JSONObject json = new JSONObject();
-            json.put("request",new Integer(2));
-
-            SocketChannel sc = SocketChannel.open();
-            sc.connect(new InetSocketAddress("127.0.0.1",4444));
-            ByteBuffer bb = ByteBuffer.allocate(512);
-            bb.put(json.toJSONString().getBytes());
-            bb.flip();
-            sc.write(bb);
-
-            Thread.sleep(10000);
-*/
-
             JSONObject o = new JSONObject();
             o.put("prova",new Integer(2));
 

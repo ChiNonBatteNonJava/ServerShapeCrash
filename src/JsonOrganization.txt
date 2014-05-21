@@ -50,8 +50,14 @@ Client:
 
 	exit
 	{
-	 "code: 100
+	 "code": 100
 	}
+
+	exit room
+	{
+	"code":101
+	}
+
 
 Server
 	error
@@ -64,11 +70,18 @@ Server
 	list room
 	{
 	 "code"	:0
+	 "rooms":[{
+	           "id":`(int) id`,
+	           "name":`(String) name`,
+	           "max_player":`(int)maxPlayer'
+	           },{...},...,{...}]
+	 }
 	}
 	
 	joined room
 	{
 	 "code"	     :1,
+	 "player_id" :`(int) id
 	 "player"    :[JsonArray player]
 	}
 
@@ -111,20 +124,31 @@ Server
 	 
 	add player
 	{
-	 "code"		:101,
+	 "code"		:102,
 	 "player_id"	:`(int) palyer_id`,
 	 player info to be defined
 	}
 	
 	remove player
 	{
-	 "code"		:102,
+	 "code"		:101,
 	 "player_id"	:`(int) player_id`
 	}
-	
+
+	return to main room
+	{
+	 "code"      :103
+	}
 
 
-Settings
+OfficialServer.Settings
     {
      "max_player" : 8
     }
+
+    car action
+    {
+     "code": 6,
+     "dir": (int) 1 avanti -1 indietro,
+     "steering":(int) 1 destra 0 dritto -1 sinistra
+     }
