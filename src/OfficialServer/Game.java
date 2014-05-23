@@ -1,5 +1,7 @@
 package OfficialServer;
 
+import com.badlogic.gdx.math.Quaternion;
+import com.badlogic.gdx.math.Vector3;
 import org.lwjgl.Sys;
 
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ public class Game extends Thread{
 
     public Game(ArrayList<Player> players, Room room){
         end = false;
+        this.room = room;
         this.players = players;
         world = PhysicsWorld.instance(String.valueOf(room.getRoomId()));
         for(Player p: players){
@@ -29,6 +32,10 @@ public class Game extends Thread{
     }
 
     public void run(){
+        GameResourceManager grm = GameResourceManager.getInstance();
+        grm.load3DObjModel(room.getMap());
+        Game3DModel map = grm.get3DModelByName(room.getMap());
+        world.addMeshCollider(map.getVerticesVector3(), new Vector3(0,-27,0), new Quaternion(0,0,0,1), 0, room.getMap());
         Log.log("Game Start");
         long firstTime = System.currentTimeMillis();
         long lastTime = System.currentTimeMillis();

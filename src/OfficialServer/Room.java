@@ -1,6 +1,5 @@
 package OfficialServer;
 
-import OfficialServer.Settings;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -35,6 +34,7 @@ public class Room extends Thread {
     private int player_id = 0;
     private ConnectionRequestManager crm;
     private Game game;
+    private String map = "pista2.obj";
 
     public Room(SocketChannel owner, Settings settings, String name, String password, Boolean passwordRequest, ConnectionRequestManager crm){
         id = static_id++;
@@ -125,6 +125,7 @@ public class Room extends Thread {
     }
 
     private void gameStart(){
+
         game.start();
     }
 
@@ -146,7 +147,6 @@ public class Room extends Thread {
         if(players.size() >= settings.getMaxplayer()){
             return false;
         }
-
         player.getSocket().configureBlocking(false);
         selector.wakeup();
         player.setKey(player.getSocket().register(selector, SelectionKey.OP_READ, player));
@@ -156,17 +156,15 @@ public class Room extends Thread {
         playerJoin.put("player_id",player.getPlayerId());
         for(Player p: players){
             arrayPlayers.add(p.toJson());
-            //p.send(playerJoin.toJSONString());
+            p.send(playerJoin);
         }
+
         JSONObject listPlayer = new JSONObject();
         listPlayer.put("code", ConnectionRequestManager.JOIN_ROOM);
         listPlayer.put("players",arrayPlayers);
+        listPlayer.put("player_id", player.getPlayerId());
         player.send(listPlayer);
         players.add(player);
-        JSONObject json = new JSONObject();
-        json.put("code", ConnectionRequestManager.PLAYER_JOIN);
-        json.put("player_id",player.getPlayerId());
-        broadcast(json);
 
         return true;
 
@@ -274,6 +272,10 @@ public class Room extends Thread {
         json.put("name",this.getRoomName());
         json.put("max_player",this.getSettings().getMaxplayer());
         return json;
+    }
+
+    public String getMap(){
+        return map;
     }
 
     public int getNewPlayerId(){
