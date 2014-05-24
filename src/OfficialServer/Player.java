@@ -72,7 +72,6 @@ public class Player
         byteBuffer.put((msg.toJSONString()+"\n").getBytes());
         byteBuffer.flip();
         socket.write(byteBuffer);
-        //Log.log(""+this);
         Log.log(socket.socket().getInetAddress().toString() + " < " + msg.toJSONString());
     }
 

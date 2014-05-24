@@ -46,15 +46,15 @@ public class Room extends Thread {
         this.passwordRequest = passwordRequest;
         this.status = STATUS_WAITING;
         this.game = new Game(players, this);
-        this.gameowner = new Player(owner, getNewPlayerId(), ""+id);
+        this.gameowner = new Player(owner, getNewPlayerId(), "" + id);
         try{
             selector = Selector.open();
             JSONObject json = new JSONObject();
             json.put("code", 2);
             json.put("room_id",id);
+            json.put("player_id", gameowner.getPlayerId());
             gameowner.send(json);
-            addPlayer(gameowner);
-            //gameStart();
+            addOwner(gameowner);
             Log.log("OfficialServer.Room " + id + " created");
         }catch (Exception e){
             Log.log("OfficialServer.Room " + id + " - " + e.getMessage());
@@ -165,6 +165,13 @@ public class Room extends Thread {
 
         return true;
 
+    }
+
+    public void addOwner(Player player) throws IOException {
+        player.getSocket().configureBlocking(false);
+        selector.wakeup();
+        player.setKey(player.getSocket().register(selector, SelectionKey.OP_READ, player));
+        players.add(player);
     }
 
     public void removePlayer(Player player) throws IOException {
