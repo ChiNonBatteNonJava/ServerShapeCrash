@@ -15,27 +15,30 @@ public class Game extends Thread{
     private Room room;
     private PhysicsWorld world;
     private boolean end;
-    public static final int MIN_DELTA = 1000;
+    public static final int MIN_DELTA = 50;
 
     public Game(ArrayList<Player> players, Room room){
         end = false;
         this.room = room;
         this.players = players;
-        world = PhysicsWorld.instance(String.valueOf(room.getRoomId()));
+        //world = PhysicsWorld.instance(String.valueOf(room.getRoomId()));
         for(Player p: players){
-            world.AddVehicle(p.getCar(), String.valueOf(p.getPlayerId()));
+            //world.AddVehicle(p.getCar(), String.valueOf(p.getPlayerId()));
         }
     }
 
+    public PhysicsWorld getWorld(){
+        return world;
+    }
+
     public void addPlayer(Player p){
-        world.AddVehicle(p.getCar(), String.valueOf(p.getPlayerId()));
+        //world.AddVehicle(p.getCar(), String.valueOf(p.getPlayerId()));
     }
 
     public void run(){
         GameResourceManager grm = GameResourceManager.getInstance();
         grm.load3DObjModel(room.getMap());
         Game3DModel map = grm.get3DModelByName(room.getMap());
-        world.addMeshCollider(map.getVerticesVector3(), new Vector3(0,-27,0), new Quaternion(0,0,0,1), 0, room.getMap());
         Log.log("Game Start");
         long firstTime = System.currentTimeMillis();
         long lastTime = System.currentTimeMillis();
@@ -44,7 +47,7 @@ public class Game extends Thread{
             lastTime = System.currentTimeMillis();
             delta = lastTime - firstTime;
             firstTime = lastTime;
-            world.update((float)(delta/1000.0));
+            room.sendCarPosition();
             lastTime = System.currentTimeMillis();
             if(lastTime-firstTime<MIN_DELTA){
                 try {

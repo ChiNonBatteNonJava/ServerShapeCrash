@@ -1,5 +1,7 @@
 package OfficialServer;
 
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.physics.bullet.collision.btBoxShape;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
@@ -20,7 +22,7 @@ public class Player
     private float direction;                        //?
     private float speed;                              //?
     private int id;
-    private PhysicCar car;
+    //private PhysicCar car;
     private SelectionKey selectionKey;
 
     public static final int CAR_FORWARD = 1;
@@ -30,13 +32,13 @@ public class Player
     public static final int CAR_STEERING_NULL = 0;
 
 
-    public Player(SocketChannel sc, int id){
+    public Player(SocketChannel sc, int id, String world){
         this.id = id;
         socket = sc;
-        car = new PhysicCar();
     }
 
     public SocketChannel getSocket(){
+        Log.log("getSocket"+socket);
         return socket;
     }
 
@@ -67,9 +69,10 @@ public class Player
     public void send(JSONObject msg) throws IOException {
         ByteBuffer byteBuffer = ByteBuffer.allocate(512);
         byteBuffer.clear();
-        byteBuffer.put(msg.toJSONString().getBytes());
+        byteBuffer.put((msg.toJSONString()+"\n").getBytes());
         byteBuffer.flip();
         socket.write(byteBuffer);
+        //Log.log(""+this);
         Log.log(socket.socket().getInetAddress().toString() + " < " + msg.toJSONString());
     }
 
@@ -80,14 +83,17 @@ public class Player
     }
 
     public SelectionKey getSelectionKey(){
+        Log.log("selectionKey");
         return selectionKey;
     }
 
     public void setKey(SelectionKey key){
         selectionKey = key;
+        Log.log("setKey"+key);
     }
-
+/*
     public PhysicCar getCar(){
         return car;
     }
+    */
 }

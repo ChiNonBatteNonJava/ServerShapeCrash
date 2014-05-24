@@ -135,7 +135,7 @@ public class ConnectionRequestManager extends Thread{
                 error.put("message","Room not found");
                 send(key,error);
             }else{
-                Player player = new Player((SocketChannel)key.channel(), room.getNewPlayerId());
+                Player player = new Player((SocketChannel)key.channel(), room.getNewPlayerId(), ""+room.getRoomId());
                 if(!room.addPlayer(player)){
                     JSONObject error = new JSONObject();
                     error.put("code", ERROR);

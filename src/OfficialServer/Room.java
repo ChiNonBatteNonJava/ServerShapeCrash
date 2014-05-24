@@ -39,7 +39,6 @@ public class Room extends Thread {
     public Room(SocketChannel owner, Settings settings, String name, String password, Boolean passwordRequest, ConnectionRequestManager crm){
         id = static_id++;
         this.crm = crm;
-        this.gameowner = new Player(owner, getNewPlayerId());
         this.players  = new ArrayList<Player>();
         this.settings = settings;
         this.name = name;
@@ -47,6 +46,7 @@ public class Room extends Thread {
         this.passwordRequest = passwordRequest;
         this.status = STATUS_WAITING;
         this.game = new Game(players, this);
+        this.gameowner = new Player(owner, getNewPlayerId(), ""+id);
         try{
             selector = Selector.open();
             JSONObject json = new JSONObject();
@@ -54,7 +54,7 @@ public class Room extends Thread {
             json.put("room_id",id);
             gameowner.send(json);
             addPlayer(gameowner);
-            gameStart();
+            //gameStart();
             Log.log("OfficialServer.Room " + id + " created");
         }catch (Exception e){
             Log.log("OfficialServer.Room " + id + " - " + e.getMessage());
@@ -70,11 +70,12 @@ public class Room extends Thread {
                 Set<SelectionKey> selectedKeys = selector.selectedKeys();
                 Iterator<SelectionKey> keyIterator = selectedKeys.iterator();
                 while(keyIterator.hasNext()) {
-                    Log.log("richiesta arrivata");
+                    Log.log("richiesta arrivata ");
                     SelectionKey key = keyIterator.next();
                     keyIterator.remove();
                     if (key.isReadable()) {
                         String msg = ((Player)key.attachment()).recive();
+                        Log.log(msg);
                         JSONParser parser = new JSONParser();
                         JSONObject json = null;
                         try{
@@ -87,11 +88,12 @@ public class Room extends Thread {
                         switch (requestCode){
                             case ConnectionRequestManager.PLAY_START:
                                 if(((Player)key.attachment())==gameowner){
-                                    gameStart();
+                                    //gameStart();
                                 }
                                 break;
                             case ConnectionRequestManager.PLAYER_ACTION:
-                                playerAction((Player)key.attachment(),json);
+                                broadcast(json);
+                                //playerAction((Player)key.attachment(),json);
                                 break;
                             case ConnectionRequestManager.PLAYER_LEFT:
                                 crm.addSocketChannel((SocketChannel) key.channel());
@@ -124,16 +126,11 @@ public class Room extends Thread {
         Log.log("room " + id + " closed");
     }
 
-    private void gameStart(){
-
-        game.start();
-    }
-
     private void gameEnd(){
         game.close();
     }
 
-    private void broadcast(JSONObject json) throws IOException {
+    public void broadcast(JSONObject json) throws IOException {
         for(Player p: players){
             p.send(json);
         }
@@ -172,6 +169,7 @@ public class Room extends Thread {
 
     public void removePlayer(Player player) throws IOException {
         player.getSelectionKey().cancel();
+//        PhysicsWorld.instance(""+id).delete(""+player.getPlayerId());
         players.remove(player);
         for(Player p: players){
             JSONObject json = new JSONObject();
@@ -186,7 +184,7 @@ public class Room extends Thread {
             selector.wakeup();
         }
     }
-
+/*
     public void playerAction(Player player, JSONObject json){
         Long longDir = (Long) json.get("dir");
         Long longSteering = (Long) json.get("steering");
@@ -213,7 +211,7 @@ public class Room extends Thread {
 
         }
     }
-
+*/
     public Settings getSettings() {
         return settings;
     }
@@ -281,4 +279,27 @@ public class Room extends Thread {
     public int getNewPlayerId(){
         return player_id++;
     }
+
+    public void sendCarPosition() {
+        JSONObject json = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+        json.put("code",6);
+        for(Player p: players){
+            JSONObject carJson = new JSONObject();
+            carJson.put("As","ewr");
+            jsonArray.add(carJson);
+        }
+        json.put("players",jsonArray);
+        for(Player p: players){
+            try {
+                p.send(json);
+            }catch (Exception e){
+                Log.log(e.getMessage());
+            }
+        }
+
+    }
+
+
+
 }
