@@ -22,6 +22,7 @@ public class Player
     private float direction;                        //?
     private float speed;                              //?
     private int id;
+    private JSONObject lastPosition;
     //private PhysicCar car;
     private SelectionKey selectionKey;
 
@@ -48,7 +49,7 @@ public class Player
 
     public String recive() throws IOException{
         String msg = "";
-        ByteBuffer byteBuffer = ByteBuffer.allocate(512);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(2048);
         byteBuffer.clear();
         int byteRead = socket.read(byteBuffer);
         if(byteRead != -1){
@@ -67,7 +68,7 @@ public class Player
     }
 
     public void send(JSONObject msg) throws IOException {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(512);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(2048);
         byteBuffer.clear();
         byteBuffer.put((msg.toJSONString()+"\n").getBytes());
         byteBuffer.flip();
@@ -89,6 +90,14 @@ public class Player
     public void setKey(SelectionKey key){
         selectionKey = key;
         Log.log("setKey"+key);
+    }
+
+    public JSONObject getLastPosition(){
+        return lastPosition;
+    }
+
+    public void setLastPosition(JSONObject json){
+        lastPosition = json;
     }
 /*
     public PhysicCar getCar(){

@@ -33,7 +33,7 @@ public class Room extends Thread {
     private static int static_id = 0;
     private int player_id = 0;
     private ConnectionRequestManager crm;
-    private Game game;
+    private SendPosition sendPosition;
     private String map = "pista2.obj";
 
     public Room(SocketChannel owner, Settings settings, String name, String password, Boolean passwordRequest, ConnectionRequestManager crm){
@@ -45,7 +45,8 @@ public class Room extends Thread {
         this.password = password;
         this.passwordRequest = passwordRequest;
         this.status = STATUS_WAITING;
-        this.game = new Game(players, this);
+        this.sendPosition = new SendPosition(players);
+        this.sendPosition.start();
         this.gameowner = new Player(owner, getNewPlayerId(), "" + id);
         try{
             selector = Selector.open();
@@ -92,10 +93,11 @@ public class Room extends Thread {
                                 }
                                 break;
                             case ConnectionRequestManager.PLAYER_ACTION:
-                                broadcast(json);
-                                //playerAction((Player)key.attachment(),json);
+                                Player p = (Player)key.attachment();
+                                p.setLastPosition(json);
                                 break;
                             case ConnectionRequestManager.PLAYER_LEFT:
+                                System.out.println("uscito");
                                 crm.addSocketChannel((SocketChannel) key.channel());
                                 removePlayer((Player)key.attachment());
                                 break;
@@ -127,7 +129,7 @@ public class Room extends Thread {
     }
 
     private void gameEnd(){
-        game.close();
+        sendPosition.end();
     }
 
     public void broadcast(JSONObject json) throws IOException {
@@ -307,6 +309,63 @@ public class Room extends Thread {
 
     }
 
+}
+
+class SendPosition extends Thread{
+
+    private ArrayList<Player> players;
+    private boolean end = false;
+    private int MIN_DELTA = 75;
+
+    public SendPosition(ArrayList<Player> players){
+        this.players = players;
+    }
+
+    public void run(){
+        long firstTime = System.currentTimeMillis();
+        long lastTime = System.currentTimeMillis();
+        long delta = firstTime - lastTime;
+
+        while (!end) {
+            try {
+                lastTime = System.currentTimeMillis();
+                delta = lastTime - firstTime;
+                firstTime = lastTime;
+                JSONObject json = new JSONObject();
+                JSONArray jsonArray = new JSONArray();
+
+                for (Player p : players) {
+                    if (p.getLastPosition() != null) {
+                        jsonArray.add(p.getLastPosition());
+                    }
+                }
+
+                json.put("code", 6);
+                json.put("players", jsonArray);
+                for (Player p : players) {
+                    try {
+                        p.send(json);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
 
 
+                if (lastTime - firstTime < MIN_DELTA) {
+                    try {
+                        Thread.sleep(MIN_DELTA - (lastTime - firstTime));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void end(){
+        end = true;
+    }
 }

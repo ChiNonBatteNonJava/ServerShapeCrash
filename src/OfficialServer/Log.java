@@ -9,6 +9,6 @@ public class Log {
     public static void log(String msg){
         String log = Calendar.getInstance().getTime().toString();
         log += " > "+msg;
-        System.out.println(log);
+        //System.out.println(log);
     }
 }
