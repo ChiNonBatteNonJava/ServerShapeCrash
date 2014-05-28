@@ -19,6 +19,7 @@ public class Room extends Thread {
     public static int STATUS_WAITING = 0;
     public static int STATUS_LOADING = 1;
     public static int STATUS_INGAME = 2;
+    public static int STATUS_END = 3;
 
     private Selector selector;
     private ArrayList<Player> players;
@@ -46,7 +47,7 @@ public class Room extends Thread {
         this.passwordRequest = passwordRequest;
         this.status = STATUS_WAITING;
         this.sendPosition = new SendPosition(players);
-        this.sendPosition.start();
+        //this.sendPosition.start();
         this.gameowner = new Player(owner, getNewPlayerId(), "" + id);
         try{
             selector = Selector.open();
@@ -88,14 +89,24 @@ public class Room extends Thread {
                         Integer requestCode = longCode == null ? -2 : Integer.valueOf(longCode.intValue());
                         switch (requestCode){
                             case ConnectionRequestManager.PLAY_START:
+
                                 if(((Player)key.attachment())==gameowner){
-                                    //gameStart();
+                                    gameStart();
                                 }
                                 break;
                             case ConnectionRequestManager.PLAYER_ACTION:
+
                                 Player p = (Player)key.attachment();
                                 p.setLastPosition(json);
                                 break;
+                            case ConnectionRequestManager.PLAYER_WIN:
+                                if(status == STATUS_INGAME) {
+
+                                    Player pl = (Player) key.attachment();
+                                    json.put("player_id", pl.getPlayerId());
+                                    broadcast(json);
+                                    status = STATUS_END;
+                                }
                             case ConnectionRequestManager.PLAYER_LEFT:
                                 System.out.println("uscito");
                                 crm.addSocketChannel((SocketChannel) key.channel());
@@ -114,6 +125,14 @@ public class Room extends Thread {
                                 key.cancel();
                                 key.channel().close();
                                 break;
+                            case 998:
+
+                                broadcast(json);
+                                break;
+                            case 999:
+
+                                broadcast(json);
+                                break;
                             default:
                                 json.put("code", ConnectionRequestManager.ERROR);
                                 json.put("message","Invalid request");
@@ -126,6 +145,28 @@ public class Room extends Thread {
             }
         }
         Log.log("room " + id + " closed");
+    }
+
+    private void gameStart(){
+        JSONObject json = new JSONObject();
+        json.put("code", ConnectionRequestManager.PLAY_START);
+        JSONArray arr = new JSONArray();
+        int count = 0;
+        for(Player p: players){
+            JSONObject pl = new JSONObject();
+            pl.put("id",p.getPlayerId());
+            pl.put("x",(30*(count%3))-30);
+            pl.put("z",(30*((int)(count/3))));
+            arr.add(pl);
+        }
+        json.put("players",arr);
+        sendPosition.start();
+        status = STATUS_INGAME;
+        try {
+            broadcast(json);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void gameEnd(){
@@ -178,8 +219,16 @@ public class Room extends Thread {
 
     public void removePlayer(Player player) throws IOException {
         player.getSelectionKey().cancel();
-//        PhysicsWorld.instance(""+id).delete(""+player.getPlayerId());
         players.remove(player);
+        if(player == gameowner){
+            if(players.size()>0) {
+                gameowner = players.get(0);
+                JSONObject json = new JSONObject();
+                json.put("code", ConnectionRequestManager.OWNER);
+                gameowner.send(json);
+            }
+        }
+//        PhysicsWorld.instance(""+id).delete(""+player.getPlayerId());
         for(Player p: players){
             JSONObject json = new JSONObject();
             json.put("code",ConnectionRequestManager.PLAYER_LEFT);
@@ -315,7 +364,7 @@ class SendPosition extends Thread{
 
     private ArrayList<Player> players;
     private boolean end = false;
-    private int MIN_DELTA = 75;
+    private int MIN_DELTA = 50;
 
     public SendPosition(ArrayList<Player> players){
         this.players = players;

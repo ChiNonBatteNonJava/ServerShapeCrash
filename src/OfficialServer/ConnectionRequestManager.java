@@ -30,6 +30,8 @@ public class ConnectionRequestManager extends Thread{
     final static int PLAY_START     = 5;
     final static int PLAYER_ACTION  = 6;
     final static int PLAY_END       = 7;
+    final static int PLAYER_WIN     = 8;
+    final static int OWNER          = 9;
     final static int EXIT           = 100;
     final static int PLAYER_LEFT    = 101;
     final static int PLAYER_JOIN    = 102;
@@ -135,15 +137,23 @@ public class ConnectionRequestManager extends Thread{
                 error.put("message","Room not found");
                 send(key,error);
             }else{
-                Player player = new Player((SocketChannel)key.channel(), room.getNewPlayerId(), ""+room.getRoomId());
-                if(!room.addPlayer(player)){
-                    JSONObject error = new JSONObject();
-                    error.put("code", ERROR);
-                    error.put("message","the room is full");
-                    send(key, error);
+                if(room.getStatus()==Room.STATUS_WAITING){
+                    Player player = new Player((SocketChannel)key.channel(), room.getNewPlayerId(), ""+room.getRoomId());
+                    if(!room.addPlayer(player)){
+                        JSONObject error = new JSONObject();
+                        error.put("code", ERROR);
+                        error.put("message","the room is full");
+                        send(key, error);
+                    }else{
+                        key.cancel();
+                    }
                 }else{
-                    key.cancel();
+                    JSONObject error = new JSONObject();
+                    error.put("code",ERROR);
+                    error.put("message","The game is already started");
+                    send(key,error);
                 }
+
             }
         }else{
             JSONObject error = new JSONObject();

@@ -10,6 +10,8 @@ public class Test {
         short b = (short)(0x0000);
         b = (short)(~ b);
         System.out.println(b);
+        Long l = new Long(3);
+        System.out.println(l);
     }
 }
 

@@ -70,7 +70,7 @@ public class Player
     public void send(JSONObject msg) throws IOException {
         ByteBuffer byteBuffer = ByteBuffer.allocate(2048);
         byteBuffer.clear();
-        byteBuffer.put((msg.toJSONString()+"\n").getBytes());
+        byteBuffer.put(("\n"+msg.toJSONString()+"\n").getBytes());
         byteBuffer.flip();
         socket.write(byteBuffer);
         Log.log(socket.socket().getInetAddress().toString() + " < " + msg.toJSONString());
